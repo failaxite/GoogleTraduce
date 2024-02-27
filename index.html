@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Traduction</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        #container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 400px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #4285f4;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        textarea, select {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        #translateButton {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        #outputText {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            min-height: 100px;
+        }
+
+        #detectedLanguage {
+            font-style: italic;
+            margin-top: 10px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <div id="container">
+        <h1>Google Traduction</h1>
+
+        <label for="inputText">Texte à traduire:</label>
+        <textarea id="inputText" placeholder="Saisissez votre texte" oninput="updateTranslation()"></textarea>
+
+        <label for="targetLanguage">Langue cible:</label>
+        <select id="targetLanguage">
+            <option value="fr">Français</option>
+            <option value="es">Espagnol</option>
+            <option value="de">Allemand</option>
+            <option value="it">Italien</option>
+            <option value="pt">Portugais</option>
+            <option value="nl">Néerlandais</option>
+            <option value="ru">Russe</option>
+            <option value="ja">Japonais</option>
+            <option value="ko">Coréen</option>
+            <option value="zh-CN">Chinois (simplifié)</option>
+            <option value="ar">Arabe</option>
+        </select>
+
+        <button id="translateButton" onclick="traductFunction()">Traduire</button>
+
+        <h3>Résultat:</h3>
+        <div id="outputText"></div>
+        <div id="detectedLanguage"></div>
+    </div>
+
+    <script>
+        async function detectLanguage(text, apiKey) {
+            try {
+                const apiUrl = `https://ws.detectlanguage.com/0.2/detect?q=${encodeURIComponent(text)}&key=${apiKey}`;
+                const response = await axios.get(apiUrl);
+
+                const detectedLanguage = response.data.data.detections[0]?.language || 'unknown';
+                return detectedLanguage;
+            } catch (error) {
+                console.error('Erreur lors de la détection de la langue :', error.message);
+                return 'unknown';
+            }
+        }
+
+        async function traductFunction() {
+            try {
+                const inputText = document.getElementById('inputText').value;
+                const targetLanguage = document.getElementById('targetLanguage').value;
+
+                const detectedLanguage = await detectLanguage(inputText, '03932687742ff8c1aaf60fb0247c5399');
+
+                document.getElementById('detectedLanguage').innerText = `(Langue détectée : ${detectedLanguage})`;
+
+                const rapidAPIKey = '2e93884cb5msh37f0365a8d8518ep1c06dbjsnef9e3009d2b1';
+
+                const options = {
+                    method: 'GET',
+                    url: 'https://translated-mymemory---translation-memory.p.rapidapi.com/get',
+                    params: {
+                        langpair: `${detectedLanguage}|${targetLanguage}`,
+                        q: inputText,
+                        mt: '1',
+                        onlyprivate: '0',
+                        de: 'a@b.c'
+                    },
+                    headers: {
+                        'X-RapidAPI-Key': rapidAPIKey,
+                        'X-RapidAPI-Host': 'translated-mymemory---translation-memory.p.rapidapi.com'
+                    }
+                };
+
+                const response = await axios.request(options);
+
+                const translation = response.data.responseData.translatedText;
+
+                document.getElementById('outputText').innerText = translation;
+            } catch (error) {
+                console.error('Erreur de traduction:', error);
+                document.getElementById('outputText').innerText = 'Erreur de traduction';
+            }
+        }
+
+        function updateTranslation() {
+            traductFunction();
+        }
+    </script>
+</body>
+</html>
